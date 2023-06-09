@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Journal Search</title>
+	<style>
+		table {
+			border-collapse: collapse;
+			width: 100%;
+		}
+		th, td {
+			text-align: left;
+			padding: 8px;
+			border-bottom: 1px solid #ddd;
+		}
+		tr:hover {
+			background-color: #f5f5f5;
+		}
+		input[type=text] {
+			padding: 8px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			margin-right: 8px;
+			flex: 1;
+		}
+		button[type=submit] {
+			padding: 8px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			background-color: #f2f2f2;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<h1>Journal Search</h1>
+
+	<form id="search-form" action="#" method="get">
+		<label for="search-input">Search by field:</label>
+		<input type="text" id="search-input" name="q">
+		<button type="submit">Search</button>
+	</form>
+
+	<table id="journal-table">
+		<thead>
+			<tr>
+				<th>No.</th>
+				<th>Journal Abbreviation</th>
+				<th>Journal Name</th>
+				<th>ISSN</th>
+				<th>JCR Category</th>
+				<th>JCR Quartile</th>
+				<th>Rank</th>
+				<th>CN Category</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>1</td>
+				<td>ACTA GEOTECH</td>
+				<td>ACTA GEOTECHNICA</td>
+				<td>1861-1125</td>
+				<td>ENGINEERING,GEOLOGICAL</td>
+				<td>Q1</td>
+				<td>A</td>
+				<td>I</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>COMPUT METHOD APPL M</td>
+				<td>COMPUTER METHODS IN 
+APPLIED MECHANICS 
+AND ENGINEERING</td>
+				<td>0045-7825</td>
+				<td>MECHANICS</td>
+				<td>Q1</td>
+				<td>A</td>
+				<td>I</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>EUR J MECH A-SOLID</td>
+				<td>EUROPEAN JOURNAL OF 
+MECHANICS A-SOLIDS</td>
+				<td>0997-7538</td>
+				<td>MECHANICS</td>
+				<td>Q1</td>
+				<td>A</td>
+				<td>I</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>INT J FRACTURE</td>
+				<td>INTERNATIONAL 
+JOURNAL OF FRACTURE</td>
+				<td>0376-9429</td>
+				<td>MECHANICS</td>
+				<td>Q1</td>
+				<td>A</td>
+				<td>I</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>INT J MECH SCI</td>
+				<td>INTERNATIONAL JOURNAL OF MECHANICAL SCIENCES</td>
+				<td>0020-7403 </td>
+				<td>MECHANICS</td>
+				<td>Q1</td>
+				<td>A</td>
+				<td>I</td>
+			</tr>
+			<!-- add the remaining rows here -->
+		</tbody>
+	</table>
+
+	<script>
+		// 获取 URL 参数中的搜索关键词
+		var urlParams = new URLSearchParams(window.location.search);
+		var query = urlParams.get('q');
+
+		// 如果搜索关键词存在，将其填充到搜索框中
+		if (query) {
+			var searchInput = document.getElementById('search-input');
+			searchInput.value = query;
+			filterTable(query.toLowerCase());
+		}
+
+		// 处理搜索表单的提交事件
+		var form = document.getElementById('search-form');
+		form.addEventListener('submit', function(event) {
+			event.preventDefault();
+			var query = document.getElementById('search-input').value.toLowerCase();
+			filterTable(query);
+			updateURL(query);
+		});
+
+		// 处理搜索框的输入事件
+		var searchInput = document.getElementById('search-input');
+		searchInput.addEventListener('input', function(event) {
+			var query = event.target.value.toLowerCase();
+			filterTable(query);
+			updateURL(query);
+		});
+
+		// 根据搜索关键词过滤表格行
+		function filterTable(query) {
+			var table = document.getElementById('journal-table');
+			var rows = table.getElementsByTagName('tr');
+			for (var i = 1; i < rows.length; i++) {
+				var row = rows[i];
+				var fields = row.getElementsByTagName('td');
+				var match = false;
+				for (var j = 0; j < fields.length; j++) {
+					var field = fields[j].textContent.toLowerCase();
+					if (field.indexOf(query) > -1) {
+						match = true;
+						break;
+					}
+				}
+				row.style.display = match ? '' : 'none';
+			}
+		}
+
+		// 更新 URL 参数中的搜索关键词
+		function updateURL(query) {
+			var urlParams = new URLSearchParams(window.location.search);
+			if (query) {
+				urlParams.set('q', query);
+			} else {
+				urlParams.delete('q');
+			}
+			window.history.replaceState({}, '', '?' + urlParams.toString());
+		}
+	</script>
+</body>
+</html>
