@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>网址大合集</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .input-field {
+      width: 300px;
+      height: 40px;
+    }
+    .delete-btn {
+      cursor: pointer;
+      color: red;
+    }
+    /* 设置表格行的行间距 */
+    #url-table tr {
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-4">网址聚合</h1>
+    <form id="url-form" class="form-inline my-2">
+      <input type="text" id="url-input" class="form-control mr-2 input-field" placeholder="网址">
+      <input type="text" id="name-input" class="form-control mr-2 input-field" placeholder="名称">
+      <button type="submit" class="btn btn-primary">添加</button>
+    </form>
+    <form id="search-form" class="form-inline my-2">
+      <input type="text" id="search-input" class="form-control mr-2 input-field" placeholder="搜索">
+      <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+    <div id="error-message" class="text-danger"></div>
+    <table id="url-table" class="table table-striped mt-4">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>名称</th>
+          <th>网址</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="url-list"></tbody>
+    </table>
+    <button id="save-button" class="btn btn-success">保存</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script>
+    var form = document.getElementById('url-form');
+    var searchForm = document.getElementById('search-form');
+    var urlInput = document.getElementById('url-input');
+    var nameInput = document.getElementById('name-input');
+    var searchInput = document.getElementById('search-input');
+    var urlTable = document.getElementById('url-table');
+    var urlList = document.getElementById('url-list');
+    var saveButton = document.getElementById('save-button');
+    var counter = 1;
+    var urls = [];
+    var isSearchMode = false; // 初始化变量
+
+    // 从本地存储中恢复数据
+    if (localStorage.getItem('urls')) {
+      urls = JSON.parse(localStorage.getItem('urls'));
+      renderTable(urls);
+    }
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // 阻止表单默认提交行为
+      var url = urlInput.value.trim();
+
+      if (url) {
+        if (!isValidUrl(url)) {
+          document.getElementById('error-message').textContent = '请输入有效的网址';
+          return;
+        }
+        document.getElementById('error-message').textContent = '';
+
+        var name = nameInput.value.trim() || url;
+        urls.push({ name: name, url: url }); // 将新数据添加到数组中
+        renderTable(urls); // 渲染表格
+
+        // 将数据保存到本地存储
+        localStorage.setItem('urls', JSON.stringify(urls));
+        nameInput.value = '';
+        urlInput.value = '';
+      }
+    });
+
+    searchForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      var searchTerm = searchInput.value.trim().toLowerCase();
+
+      if (searchTerm) {
+        var filteredUrls = urls.filter(function(url) {
+          return url.name.toLowerCase().includes(searchTerm) ||
+                 url.url.toLowerCase().includes(searchTerm);
+        });
+        isSearchMode = true; // 在搜索模式下
+        renderTable(filteredUrls);
+      } else {
+        isSearchMode = false; // 不在搜索模式下
+        renderTable(urls);
+      }
+    });
+
+    saveButton.addEventListener('click', function() {
+      var rows = urlList.getElementsByTagName('tr');
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var nameCell = row.cells[1];
+        var urlCell = row.cells[2];
+        var index = parseInt(row.dataset.index); // 获取索引值
+
+        if (nameCell.isContentEditable || urlCell.isContentEditable) {
+          // 更新数据
+          urls[index].name = nameCell.textContent;
+          urls[index].url = urlCell.textContent;
+
+          // 移除可编辑属性
+          nameCell.removeAttribute('contenteditable');
+          urlCell.removeAttribute('contenteditable');
+        }
+      }
+
+      // 将更新后的数据保存到本地存储
+      localStorage.setItem('urls', JSON.stringify(urls));
+      isSearchMode = false; // 保存后退出搜索模式
+    });
+
+    function renderTable(urlsToRender) {
+      urlList.innerHTML = ''; // 清空表格内容
+      counter = 1;
+
+      for (var i = 0; i < urlsToRender.length; i++) {
+        var url = urlsToRender[i];
+        var row = urlList.insertRow();
+        row.dataset.index = i; // 存储索引值
+
+        var numberCell = row.insertCell();
+        numberCell.textContent = counter++;
+
+        var nameCell = row.insertCell();
+        nameCell.textContent = url.name;
+        if (!isSearchMode) { // 当不在搜索模式下时可编辑
+          nameCell.setAttribute('contenteditable', 'true');
+        }
+
+        var urlCell = row.insertCell();
+        var urlLink = document.createElement('a');
+        urlLink.href = url.url;
+        urlLink.textContent = url.url;
+        urlLink.target = '_blank'; // 在新窗口中打开链接
+        if (!isSearchMode) { // 当不在搜索模式下时可编辑
+          urlCell.setAttribute('contenteditable', 'true');
+          urlCell.addEventListener('mousedown', function(e) {
+            if (e.ctrlKey) {
+              e.preventDefault();
+              window.open(this.textContent, '_blank');
+            }
+          });
+        }
+        urlCell.appendChild(urlLink);
+
+        var deleteCell = row.insertCell();
+        var deleteLink = document.createElement('a');
+        deleteLink.textContent = '删除';
+        deleteLink.className = 'delete-btn';
+        deleteLink.addEventListener('click', function() {
+          var index = parseInt(this.parentElement.parentElement.dataset.index);
+          urls.splice(index, 1);
+          localStorage.setItem('urls', JSON.stringify(urls));
+          renderTable(urls);
+        });
+        deleteCell.appendChild(deleteLink);
+      }
+    }
+
+    function isValidUrl(string) {
+      try {
+        new URL(string);
+      } catch (_) {
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>
